@@ -1,6 +1,4 @@
 // Project_2.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #include <iostream>
 #include "adjacency_list.h"
 
@@ -18,7 +16,6 @@ int main()
 		adj.add_node(from, to);
 	}
 	//Create a graph object
-	adj.print_list();
 	adj.pagerank(power_iterations);
 }
 

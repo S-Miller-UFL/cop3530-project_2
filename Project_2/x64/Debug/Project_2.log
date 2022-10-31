@@ -1,12 +1,2 @@
 ﻿  Project_2.cpp
-C:\Users\steve\source\cop3530\Project_2\Project_2\adjacency_list.h(162,54): warning C4267: '=': conversion from 'size_t' to '_Ty', possible loss of data
-          with
-          [
-              _Ty=int
-          ]
-C:\Users\steve\source\cop3530\Project_2\Project_2\adjacency_list.h(166,49): warning C4267: '=': conversion from 'size_t' to '_Ty', possible loss of data
-          with
-          [
-              _Ty=int
-          ]
   Project_2.vcxproj -> C:\Users\steve\source\cop3530\Project_2\x64\Debug\Project_2.exe
