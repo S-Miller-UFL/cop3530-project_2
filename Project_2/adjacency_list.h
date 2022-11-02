@@ -4,12 +4,14 @@
 #include <vector>
 #include <algorithm>
 #include <iomanip>
+//got help from sara osmanovic on 10/31/2022
+//got help from angela on 11/1/2022
 class adj_list
 {
 public:
 	struct node
 	{
-		float weight = 0.0f;
+		double pagerank = 0.0f;
 		std::string name;
 		std::vector<int> out_indexes;
 		std::vector<int> in_indexes;
@@ -23,29 +25,25 @@ public:
 	//void print_list_helper(node*);
 	node* find_node(std::string);
 	void pagerank(int);
-	bool check_if_edge(int, int);
-	void create_adjacency_matrix();
+	bool check_if_edge(std::string, std::string);
 	int get_index(node*);
-	void create_map_matrix();
-	void dot_product();
 	~adj_list();
+	std::vector<node*> get_incoming_nodes(std::string);
+	std::vector<node*> get_outgoing_nodes(std::string);
 
 private:
-	std::map<int,node*> node_map;
+	std::map<std::string,node*> node_map;
 	int map_size = 0;
-	std::vector<std::vector<float>> adjacency_matrix;
-	//std::vector<int> columns;
-	std::vector<float> map_matrix;
-	//mtrx* matrix;
 };
 
+//use strings for index and not ints
 //this is O(N) i believe
 void adj_list::add_node(std::string from, std::string to)
 {
 	node* node_from = find_node(from);
 	node* node_to = find_node(to);
 	//if both of our nodes exist
-	if (node_from != nullptr && node_to != nullptr)
+	if (node_from != nullptr && node_to != nullptr && !check_if_edge(from,to))
 	{
 		//link the nodes together
 		node_from->out.push_back(node_to); //add the node at our "to" to the out vector at our "from" node
@@ -60,12 +58,13 @@ void adj_list::add_node(std::string from, std::string to)
 		node_from = new node;
 		node_from->name = from;
 		//add our "from" node to the node map
-		node_map.emplace(map_size++,node_from);
+		node_map.emplace(from,node_from);
 		//link them together
 		node_to->in.push_back(node_from);
 		node_from->out.push_back(node_to);
 		node_from->out_indexes.push_back(get_index(node_to));
 		node_to->in_indexes.push_back(get_index(node_from));
+		map_size++;
 	}
 	//if our "to" doesnt exist
 	else if (node_from != nullptr && node_to == nullptr)
@@ -74,13 +73,13 @@ void adj_list::add_node(std::string from, std::string to)
 		node_to = new node;
 		node_to->name = to;
 		//add our "to" node to the node map
-		node_map.emplace(map_size++, node_to);
+		node_map.emplace(to, node_to);
 		//link them together
 		node_from->out.push_back(node_to);
 		node_to->in.push_back(node_from);
 		node_from->out_indexes.push_back(get_index(node_to));
 		node_to->in_indexes.push_back(get_index(node_from));
-
+		map_size++;
 	}
 	//if neither exist
 	else if (node_from == nullptr && node_to == nullptr)
@@ -92,13 +91,15 @@ void adj_list::add_node(std::string from, std::string to)
 		node_to= new node;
 		node_to->name = to;
 		//add them to the node map
-		node_map.emplace(map_size++, node_from);
-		node_map.emplace(map_size++, node_to);
+		node_map.emplace(from, node_from);
+		node_map.emplace(to, node_to);
 		//link them together
 		node_from->out.push_back(node_to);
 		node_to->in.push_back(node_from);
 		node_from->out_indexes.push_back(get_index(node_to));
 		node_to->in_indexes.push_back(get_index(node_from));
+		map_size++;
+		map_size++;
 	}
 }
 
@@ -156,7 +157,7 @@ adj_list::node* adj_list::find_node(std::string name)
 	auto it = node_map.begin();
 	while (it != node_map.end())
 	{
-		if (it->second->name == name)
+		if (it->first == name)
 		{
 			return it->second;
 		}
@@ -168,44 +169,78 @@ adj_list::node* adj_list::find_node(std::string name)
 	return nullptr;
 }
 
+//this is O(N^2)
 void adj_list::pagerank(int iterations)
 {
-	create_adjacency_matrix(); //populate adjacency matrix
-	create_map_matrix();//populate map matrix
-	for (int i = 1; i < iterations; i++)
-	{
-		dot_product();
-	}
+
 	auto it = node_map.begin();
-	std::pair<std::string, float> p;
-	std::vector<std::pair <std::string, float>> v;
+	//we need a vector of our page ranks so we can work on them
+	std::vector<node*> node_list;
+	std::vector<node*> incoming;
 	for (int i = 0; i < map_size; i++)
 	{
-		/*
-		it->second->weight = map_matrix.at(i);
-		
-		std::cout << it->second->name << " " << map_matrix.at(i) << std::endl;
-		*/
-		p.first = it->second->name;
-		p.second = map_matrix.at(i);
-		v.push_back(p);
+		it->second->pagerank = (1.0f / double(map_size));
+		node_list.push_back(it->second);
+
 		it++;
 	}
-	std::sort(v.begin(), v.end());
-	for (int i = 0; i < v.size(); i++)
+	//calculate our page rank
+	/*
+	* get our incoming nodes for our respective node
+	* get their page ranks
+	* divide their page ranks by the number of their outgoing nodes
+	* add those numbers to our respective node pagerank
+	*/
+	it = node_map.begin();
+	double rank = 0.0f;
+	std::vector<double> page_ranks;
+	for (int i = 0; i < node_list.size(); i++)
 	{
-		std::cout << v.at(i).first << " " << std::fixed<< std::setprecision(2)<< v.at(i).second << std::endl;
+		page_ranks.push_back(1.0f/map_size);
 	}
+	while (iterations > 1)
+	{
+		for (int i = 0; i < node_list.size(); i++)
+		{
+			incoming = node_list.at(i)->in; //incoming nodes
+			
+			//this looks at every incoming node at our current vertex, gets it pagerank, divides it, then adds it to our rank
+			for (int l = 0; l < incoming.size(); l++)
+			{
+				rank += (incoming.at(l)->pagerank / incoming.at(l)->out.size());
+			}
+			page_ranks.at(i) = (rank);
+			incoming.clear();
+			rank = 0.0f;
+		}
+		for (int i = 0; i < node_list.size(); i++)
+		{
+			node_list.at(i)->pagerank = page_ranks.at(i);
+		}
+		iterations--;
+	}
+	for (int i = 0; i < page_ranks.size(); i++)
+	{
+		node_list.at(i)->pagerank = page_ranks.at(i);
+	}
+	it = node_map.begin();
+	for (int i = 0; i < map_size; i++)
+	{
+		std::cout << it->first << " " << std::fixed << std::setprecision(2) << it->second->pagerank << std::endl;
+		it++;
+	}
+	
 }
 
-bool adj_list::check_if_edge(int from, int to)
+//this is O(N)
+bool adj_list::check_if_edge(std::string from, std::string to)
 {
-	auto it = node_map.at(from);
-	auto it_ = node_map.at(to);
+	auto it = node_map.find(from);
+	auto it_ = node_map.find(to);
 	
-	for (int i =0; i < it->out_indexes.size(); i++)
+	for (int i =0; i < it->second->out.size(); i++)
 	{
-		if (it->out_indexes.at(i) == to)
+		if (it->second->out.at(i)->name == to)
 		{
 			return true;
 		}
@@ -213,31 +248,7 @@ bool adj_list::check_if_edge(int from, int to)
 	return false;
 }
 
-void adj_list::create_adjacency_matrix()
-{
-	auto it = node_map.begin();
-	for (int i = 0; i < map_size; i++)
-	{
-		std::vector<float> c;
-		for (int j = 0; j < map_size; j++)
-		{
-			c.push_back(0);
-			//columns.push_back(j + 1);
-		}
-		this->adjacency_matrix.push_back(c);
-	}
-	for (int i = 0; i < map_size; i++)
-	{
-		for (int j = 0; j < map_size; j++)
-		{
-			if (check_if_edge(j, i))
-			{
-				this->adjacency_matrix.at(i).at(j) = (1 / float((it->second->out.size())));
-			}
-		}
-	}
-}
-
+//this is O(N)
 int adj_list::get_index(node* n)
 {
 	auto it = node_map.begin();
@@ -245,7 +256,7 @@ int adj_list::get_index(node* n)
 	{
 		if (it->second == n)
 		{
-			return it->first;
+			return 0;
 		}
 		else
 		{
@@ -255,39 +266,6 @@ int adj_list::get_index(node* n)
 	return -1;
 }
 
-void adj_list::create_map_matrix()
-{
-	for (int i = 0; i < map_size; i++)
-	{
-		this->map_matrix.push_back (1/(float)map_size);
-	}
-}
-
-void adj_list::dot_product()
-{
-	for (int i = 0; i < map_size; i++)
-	{
-		for (int j = 0; j < map_size; j++)
-		{
-			//multiply matrices
-			this->adjacency_matrix.at(i).at(j) = (this->adjacency_matrix.at(i).at(j))*this->map_matrix.at(j);
-		}
-	}
-	//initialize map matrix
-	for (int j = 0; j < map_size; j++)
-	{
-		this->map_matrix.at(j) = 0;
-	}
-	//create dot product
-	for (int i = 0; i < map_size; i++)
-	{
-		for (int j = 0; j < map_size; j++)
-		{
-			this->map_matrix.at(i) += this->adjacency_matrix.at(i).at(j);
-		}
-		//std::cout << std::truncf(this->map_matrix.at(i)) << std::endl;
-	}
-}
 
 adj_list::~adj_list()
 {
@@ -301,4 +279,17 @@ adj_list::~adj_list()
 	}
 	delete it->second;
 	node_map.clear();
+}
+
+std::vector<adj_list::node*> adj_list::get_incoming_nodes(std::string name)
+{
+	node* n = find_node(name);
+	return n->in;
+}
+
+
+std::vector<adj_list::node*> adj_list::get_outgoing_nodes(std::string name)
+{
+	node* n = find_node(name);
+	return n->out;
 }

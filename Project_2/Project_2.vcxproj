@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClCompile Include="matrix.cpp" />
     <ClCompile Include="Project_2.cpp" />
+    <ClCompile Include="test_case_generator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="adjacency_list.h" />
