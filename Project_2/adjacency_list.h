@@ -6,6 +6,11 @@
 #include <iomanip>
 //got help from sara osmanovic on 10/31/2022
 //got help from angela on 11/1/2022
+/*
+* trying with just a few nodes but with a large amount of iterations
+* add more nodes, keep testing iterations.
+* max number of nodes theyll test is around 200 up to around 10000
+*/
 class adj_list
 {
 public:
@@ -21,16 +26,11 @@ public:
 	void add_node(std::string, std::string);
 	int get_map_size();
 	std::string get_name(node*);
-	//void print_list();
-	//void print_list_helper(node*);
 	node* find_node(std::string);
 	void pagerank(int);
 	bool check_if_edge(std::string, std::string);
 	int get_index(node*);
 	~adj_list();
-	std::vector<node*> get_incoming_nodes(std::string);
-	std::vector<node*> get_outgoing_nodes(std::string);
-
 private:
 	std::map<std::string,node*> node_map;
 	int map_size = 0;
@@ -115,42 +115,6 @@ std::string adj_list::get_name(node* node)
 	return node->name;
 }
 
-//this was really for debugging purposes, i dont think i need this anymore.
-/*
-//this is O(N^2)
-void adj_list::print_list()
-{
-	for (int i =0; i< node_map.size(); i++)
-	{
-		print_list_helper(node_map.at(i));
-	}
-}
-
-
-//this is O(N)
-void adj_list::print_list_helper(node* n)
-{
-	if (n == nullptr)
-	{
-		return;
-	}
-	else
-	{
-		//std::cout << "at node " << n->name << std::endl;
-		//std::cout << "in nodes: ";
-		for (int i = 0; i < n->in.size(); i++)
-		{
-			std::cout << n->in.at(i)->name << std::endl;
-		}
-		//std::cout << "out nodes: ";
-		for (int i = 0; i < n->out.size(); i++)
-		{
-			std::cout << n->out.at(i)->name << std::endl;
-		}
-	}
-}
-*/
-
 //this function is O(N)
 adj_list::node* adj_list::find_node(std::string name)
 {
@@ -213,12 +177,14 @@ void adj_list::pagerank(int iterations)
 			incoming.clear();
 			rank = 0.0f;
 		}
+		//initialize the pagerank for every node
 		for (int i = 0; i < node_list.size(); i++)
 		{
 			node_list.at(i)->pagerank = page_ranks.at(i);
 		}
 		iterations--;
 	}
+	//update the pagerank at every node
 	for (int i = 0; i < page_ranks.size(); i++)
 	{
 		node_list.at(i)->pagerank = page_ranks.at(i);
@@ -266,10 +232,9 @@ int adj_list::get_index(node* n)
 	return -1;
 }
 
-
+//this is O(N)
 adj_list::~adj_list()
 {
-	//std::cout << "clearing memory..." << std::endl;
 	auto it = node_map.end();
 	it--;
 	while (it != node_map.begin())
@@ -281,15 +246,4 @@ adj_list::~adj_list()
 	node_map.clear();
 }
 
-std::vector<adj_list::node*> adj_list::get_incoming_nodes(std::string name)
-{
-	node* n = find_node(name);
-	return n->in;
-}
 
-
-std::vector<adj_list::node*> adj_list::get_outgoing_nodes(std::string name)
-{
-	node* n = find_node(name);
-	return n->out;
-}
